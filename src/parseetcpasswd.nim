@@ -40,7 +40,7 @@ template parseEtcPasswdTmpl(content: string, passwd: Passwd, body: untyped) =
     body
 
 proc parseEtcPasswd*(content: string): seq[Passwd] =
-  ## Returns /etc/passwd object from string.
+  ## Returns passwd objects from string.
   runnableExamples:
     let p = parseEtcPasswd("user1234:x:1000:1000:user1234:/home/user1234:/usr/bin/zsh")
     doAssert p[0][] == Passwd(
@@ -58,7 +58,7 @@ proc parseEtcPasswd*(content: string): seq[Passwd] =
     result.add(passwd)
 
 proc readEtcPasswdFile*(filename: string): seq[Passwd] =
-  ## Returns /etc/passwd object from file.
+  ## Returns passwd objects from file.
   runnableExamples:
     let p = readEtcPasswdFile("tests/in/passwd")
     doAssert p[0][] == Passwd(
@@ -83,7 +83,7 @@ proc readEtcPasswdFile*(filename: string): seq[Passwd] =
   result = readFile(filename).parseEtcPasswd
 
 proc writeEtcPasswd*(filename: string, passwds: varargs[Passwd]) =
-  ## Writes to `filename` file from /etc/passwd objects.
+  ## Writes to `filename` file from passwd objects.
   runnableExamples:
     let p = Passwd(
       userName: "user1234",
@@ -103,12 +103,29 @@ proc writeEtcPasswd*(filename: string, passwds: varargs[Passwd]) =
   writeFile(filename, content)
 
 proc lookupEtcPasswdWithUid*(uid: int, content: string): Passwd =
+  ## Lookups passwd string with uid.
+  runnableExamples:
+    let content =
+      "root:x:0:0::/root:/usr/bin/zsh\n" &
+      "user1234:x:1000:1000:user1234:/home/user1234:/usr/bin/zsh"
+    let p = lookupEtcPasswdWithUid(1000, content)
+    doAssert p[] == Passwd(
+      userName: "user1234",
+      password: "x",
+      uid: 1000,
+      gid: 1000,
+      comment: "user1234",
+      homeDir: "/home/user1234",
+      loginShell: "/usr/bin/zsh",
+    )[]
+
   var passwd: Passwd
   content.parseEtcPasswdTmpl(passwd):
     if passwd.uid == uid:
       return passwd
 
 proc lookupEtcPasswdFileWithUid*(uid: int, filename: string): Passwd =
+  ## Lookups passwd file with uid.
   runnableExamples:
     let p = lookupEtcPasswdFileWithUid(1001, "tests/in/passwd")
     doAssert p[] == Passwd(
@@ -124,12 +141,29 @@ proc lookupEtcPasswdFileWithUid*(uid: int, filename: string): Passwd =
   lookupEtcPasswdWithUid(uid, readFile(filename))
 
 proc lookupEtcPasswdWithGid*(gid: int, content: string): Passwd =
+  ## Lookups passwd string with gid.
+  runnableExamples:
+    let content =
+      "root:x:0:0::/root:/usr/bin/zsh\n" &
+      "user2222:x:1001:1002:comment:/home/user2222:/usr/bin/zsh"
+    let p = lookupEtcPasswdWithGid(1002, content)
+    doAssert p[] == Passwd(
+      userName: "user2222",
+      password: "x",
+      uid: 1001,
+      gid: 1002,
+      comment: "comment",
+      homeDir: "/home/user2222",
+      loginShell: "/usr/bin/zsh",
+    )[]
+
   var passwd: Passwd
   content.parseEtcPasswdTmpl(passwd):
     if passwd.gid == gid:
       return passwd
 
 proc lookupEtcPasswdFileWithGid*(gid: int, filename: string): Passwd =
+  ## Lookups passwd file with gid.
   runnableExamples:
     let p = lookupEtcPasswdFileWithGid(1002, "tests/in/passwd")
     doAssert p[] == Passwd(
@@ -148,4 +182,5 @@ proc `$`*(p: Passwd): string =
   runnableExamples:
     let p = readEtcPasswdFile("tests/in/passwd")
     doAssert $p[1] == "user1234:x:1000:1000:user1234:/home/user1234:/usr/bin/zsh"
+
   result = &"{p.userName}:{p.password}:{p.uid}:{p.gid}:{p.comment}:{p.homeDir}:{p.loginShell}"
