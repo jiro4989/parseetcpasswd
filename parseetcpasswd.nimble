@@ -11,7 +11,7 @@ packageName   = "parseetcpasswd"
 
 requires "nim >= 0.20.2"
 
-import strformat
+import strformat, os
 
 task docs, "Generate documents":
   exec &"nimble doc src/{packageName}.nim -o:docs/{packageName}.html"
@@ -24,6 +24,11 @@ task checkFormat, "Checking that codes were formatted":
     if readFile(f) != readFile(tmpFile):
       inc errCount
     rmFile tmpFile
+  if errCount != 0:
+    echo "--------------------------------------------------------------------------------"
+    echo "Code style is bad."
+    echo "Please fix."
+    echo "--------------------------------------------------------------------------------"
   exec &"exit {errCount}"
 
 task ci, "Run CI":
