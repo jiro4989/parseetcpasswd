@@ -1,5 +1,7 @@
 # parseetcpasswd
 
+![Build Status](https://github.com/jiro4989/parseetcpasswd/workflows/Build%20and%20test%20Nim/badge.svg)
+
 parseetcpasswd is a library to parse /etc/passwd.
 
 ## Development
